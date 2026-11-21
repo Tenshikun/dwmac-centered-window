@@ -29,7 +29,17 @@ extension Workspace {
 
         if windows.count == 1 {
             let window = windows[0]
-            try await layoutWindow(window, point, width, height, virtual, context)
+            if config.centerSingleWindow {
+                let windowWidth = width * CGFloat(config.singleWindowWidth)
+                let windowHeight = height * CGFloat(config.singleWindowHeight)
+                let centeredPoint = CGPoint(
+                    x: point.x + (width - windowWidth) / 2,
+                    y: point.y + (height - windowHeight) / 2
+                )
+                try await layoutWindow(window, centeredPoint, windowWidth, windowHeight, virtual, context)
+            } else {
+                try await layoutWindow(window, point, width, height, virtual, context)
+            }
             return
         }
 

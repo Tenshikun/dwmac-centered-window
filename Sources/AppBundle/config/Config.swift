@@ -47,6 +47,9 @@ struct Config: ConvenienceCopyable {
     var defaultMfact: Double = 0.5
     var attachBelow: Bool = false
     var centerFloatingWindows: Bool = false
+    var centerSingleWindow: Bool = false
+    var singleWindowWidth: Double = 0.65
+    var singleWindowHeight: Double = 0.85
     var keyMapping = KeyMapping()
     var mod: String = "" // User defined modifier alias
     var execConfig: ExecConfig = ExecConfig()

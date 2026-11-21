@@ -111,6 +111,9 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "default-mfact": Parser(\.defaultMfact, parseFloat),
     "attach-below": Parser(\.attachBelow, parseBool),
     "center-floating-windows": Parser(\.centerFloatingWindows, parseBool),
+    "center-single-window": Parser(\.centerSingleWindow, parseBool),
+    "single-window-width": Parser(\.singleWindowWidth, parseSingleWindowRatio),
+    "single-window-height": Parser(\.singleWindowHeight, parseSingleWindowRatio),
     "exec": Parser(\.execConfig, parseExecConfig),
 
     keyMappingConfigRootKey: Parser(\.keyMapping, skipParsing(Config().keyMapping)), // Parsed manually
@@ -231,6 +234,11 @@ func parseInt(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> Parsed
 
 func parseFloat(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Double> {
     raw.double.orFailure(expectedActualTypeError(expected: .double, actual: raw.type, backtrace))
+}
+
+private func parseSingleWindowRatio(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<Double> {
+    parseFloat(raw, backtrace)
+        .filter(.semantic(backtrace, "Must be in (0, 1] range")) { $0 > 0 && $0 <= 1 }
 }
 
 func parseString(_ raw: TOMLValueConvertible, _ backtrace: TomlBacktrace) -> ParsedToml<String> {
