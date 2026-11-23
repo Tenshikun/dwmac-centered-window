@@ -35,6 +35,20 @@ struct LayoutCommand: Command {
             case .floating:
                 if !window.isFloating {
                     window.isFloating = true
+                    // Center once when switching from tiling to floating.
+                    // Do not enable center-floating-windows, which recenters on refresh.
+                    if let workspace = window.nodeWorkspace {
+                        let area = workspace.workspaceMonitor.visibleRect
+                        let size = window.lastFloatingSize ?? CGSize(
+                            width: area.width * 0.70,
+                            height: area.height * 0.80
+                        )
+                        let origin = CGPoint(
+                            x: area.topLeftX + (area.width - size.width) / 2,
+                            y: area.topLeftY + (area.height - size.height) / 2
+                        )
+                        window.setAxFrame(origin, size)
+                    }
                     return true
                 }
                 return false
