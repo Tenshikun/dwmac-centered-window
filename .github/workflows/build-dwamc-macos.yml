@@ -1,0 +1,60 @@
+name: Build patched Dwmac for macOS 14
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out patched branch
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: |
+          sudo xcode-select --switch /Applications/Xcode_26.2.app/Contents/Developer
+          xcodebuild -version
+          swift --version
+
+      - name: Build arm64 macOS app (no Cargo)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Dwmac.xcodeproj \
+            -scheme Dwmac \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$PWD/.xcode-build" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MACOSX_DEPLOYMENT_TARGET=13.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=NO \
+            GCC_TREAT_WARNINGS_AS_ERRORS=NO \
+            build
+
+      - name: Ad-hoc sign and package the app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          ditto '.xcode-build/Build/Products/Release/Dwmac.app' dist/Dwmac.app
+          codesign --force --deep --sign - \
+            --entitlements resources/Dwmac.entitlements dist/Dwmac.app
+          codesign --verify --deep --strict --verbose=2 dist/Dwmac.app
+          ditto -c -k --keepParent dist/Dwmac.app dist/Dwmac-patched-arm64.zip
+
+      - name: Upload downloadable app
+        uses: actions/upload-artifact@v4
+        with:
+          name: dwmac-patched-arm64
+          path: dist/Dwmac-patched-arm64.zip
+          if-no-files-found: error
+          retention-days: 14
